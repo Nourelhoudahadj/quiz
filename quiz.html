@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كويز تطوير الذات</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #quiz {
+    max-width: 700px;
+    width: 100%;
+    background: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    text-align: center;
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  h2 {
+    margin-bottom: 20px;
+    color: #444;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+  }
+
+  .options button {
+    padding: 14px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    background: #f0f0f0;
+    transition: 0.3s all;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  }
+
+  .options button:hover {
+    transform: translateY(-2px);
+    background: #e0e0e0;
+  }
+
+  .options button.selected {
+    background: #4caf50;
+    color: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transform: scale(1.05);
+  }
+
+  #navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  #navigation button {
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: none;
+    background: #2196f3;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  #navigation button:hover:not(:disabled) {
+    background: #1976d2;
+    transform: translateY(-2px);
+  }
+
+  #navigation button:disabled {
+    background: #bbb;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #progress {
+    background: #ddd;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+
+  #progress-fill {
+    background: #2196f3;
+    height: 100%;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  #result {
+    display: none;
+    margin-top: 20px;
+    padding: 25px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+
+  /* Confetti */
+  #confetti div {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    top: 0;
+    animation: fall 3s linear forwards;
+  }
+
+  @keyframes fall {
+    to {
+      transform: translateY(500px) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 600px){
+    #quiz { padding: 20px; }
+    .options button { font-size: 14px; padding: 12px; }
+    #navigation button { font-size: 14px; padding: 10px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="quiz">
+  <h2 id="question-title">السؤال</h2>
+  <div class="options" id="options"></div>
+  <div id="progress"><div id="progress-fill"></div></div>
+  <div id="navigation">
+    <button id="prev-btn" onclick="prevQuestion()">السابق</button>
+    <button id="next-btn" onclick="nextQuestion()">التالي</button>
+  </div>
+</div>
+
+<div id="result"></div>
+<div id="confetti"></div>
+
+<script>
+const questions = [
+  "أستطيع اتخاذ قرارات مهمة بسرعة وثقة.",
+  "أستطيع تحمل المخاطر المدروسة دون خوف زائد.",
+  "أُظهر مثابرة عالية في مواجهة الصعوبات.",
+  "أستطيع العمل تحت الضغط دون أن أفقد تركيزي.",
+  "أستطيع تحديد أهداف واضحة وطويلة المدى.",
+  "أمتلك القدرة على قيادة الآخرين وتحفيزهم.",
+  "أستطيع إيجاد حلول مبتكرة للمشاكل.",
+  "أستطيع إدارة وقتي بكفاءة.",
+  "أتعلم بسرعة من التجارب والأخطاء.",
+  "أملك الثقة لأبدأ مشاريع جديدة دون تردد.",
+  "أستطيع التواصل بوضوح مع الآخرين.",
+  "أُظهر التزاماً عالياً تجاه المهام والمسؤوليات.",
+  "أستطيع فهم احتياجات الآخرين بسهولة.",
+  "أتحكم جيداً في مشاعري مهما كانت الظروف.",
+  "أمتلك القدرة على التفاوض بشكل فعّال.",
+  "أستطيع اتخاذ خطوات جريئة لتحقيق أهدافي.",
+  "أُظهر روح المبادرة باستمرار.",
+  "أستطيع التعامل مع الفشل دون أن أتوقف.",
+  "أمتلك القدرة على رؤية الصورة الكبيرة للمشاريع.",
+  "أضع خططاً واضحة لتنفيذ أفكاري.",
+  "أستطيع إقناع الآخرين بأفكاري بسهولة.",
+  "أُظهر انضباطاً ذاتياً عالياً.",
+  "أستطيع بناء علاقات جديدة بسرعة.",
+  "أتعامل مع المشكلات بهدوء وبدون انفعال زائد.",
+  "أمتلك رغبة قوية في التطوير المستمر.",
+  "أستطيع تحليل المعلومات واتخاذ قرارات سليمة.",
+  "أتحمل المسؤولية الكاملة عن أفعالي.",
+  "أمتلك القدرة على إدارة فريق عمل.",
+  "أستطيع تنظيم الموارد المالية للمشاريع.",
+  "أستطيع العمل لفترات طويلة لتحقيق أهدافي.",
+  "أمتلك القدرة على الإقناع والتأثير.",
+  "أستطيع تقييم الفرص بسرعة.",
+  "أستطيع التعلم من الآخرين بسهولة.",
+  "أستطيع إدارة التوتر بطريقة فعّالة.",
+  "أمتلك مهارات تنظيمية قوية.",
+  "أستطيع تنفيذ عدة مهام في نفس الوقت.",
+  "أستطيع جذب العملاء أو المستفيدين للأفكار الجديدة.",
+  "أمتلك الحافز الداخلي للنجاح.",
+  "أستطيع التكيف بسرعة مع التغيير.",
+  "أستطيع بناء خطة بديلة إذا فشلت الخطة الأساسية.",
+  "أمتلك قدرة عالية على التخطيط المسبق.",
+  "أستطيع اتخاذ القرارات حتى لو كانت المعلومات غير مكتملة.",
+  "أُظهر التزاماً تجاه تطوير نفسي باستمرار.",
+  "أمتلك مهارات تحليلية قوية.",
+  "أستطيع تقييم المخاطر قبل البدء بأي خطوة.",
+  "أستطيع المنافسة دون خوف أو تردد.",
+  "أمتلك روح القيادة والمبادرة.",
+  "أستطيع العمل باستقلالية دون انتظار أوامر.",
+  "أمتلك القدرة على التفكير خارج الصندوق.",
+  "أستطيع تحويل فكرة إلى مشروع فعلي."
+].map(q => ({ q, options:[{label:"نعم", value:5},{label:"لا", value:1}]}));
+
+const results = [
+  {min:0, max:50, message:"أنت في مرحلة تطوير الذات الأساسية."},
+  {min:51, max:125, message:"أنت متقدم بشكل جيد في مهاراتك القيادية."},
+  {min:126, max:250, message:"أنت رائد في تطوير الذات وتمتلك مهارات قوية."}
+];
+
+let currentQuestion = 0;
+let answers = Array(questions.length).fill(null);
+let score = 0;
+
+function saveProgress() { localStorage.setItem('quizProgress', JSON.stringify({currentQuestion, answers})); }
+function loadProgress() { const data = JSON.parse(localStorage.getItem('quizProgress')); if(data){ currentQuestion=data.currentQuestion; answers=data.answers; } }
+
+function showQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById("question-title").textContent = q.q;
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  q.options.forEach(opt=>{
+    const btn = document.createElement("button");
+    btn.textContent = opt.label;
+    if(answers[currentQuestion]===opt.value) btn.classList.add('selected');
+    btn.onclick = () => {
+      answers[currentQuestion] = opt.value;
+      score = answers.reduce((sum,ans)=>sum+(ans||0),0);
+      document.querySelectorAll('.options button').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      setTimeout(()=>{document.getElementById("next-btn").disabled=false;},300);
+      saveProgress();
+    };
+    optionsDiv.appendChild(btn);
+  });
+  document.getElementById("prev-btn").disabled = currentQuestion===0;
+  document.getElementById("next-btn").disabled = answers[currentQuestion]===null;
+  document.getElementById("quiz").style.animation = "fadeIn 0.5s ease-in";
+  updateProgress();
+}
+
+function updateProgress() {
+  document.getElementById("progress-fill").style.width = ((currentQuestion+1)/questions.length)*100 + '%';
+}
+
+function nextQuestion() { if(currentQuestion<questions.length-1){ currentQuestion++; showQuestion(); } else { displayResult(); } }
+function prevQuestion() { if(currentQuestion>0){ currentQuestion--; showQuestion(); } }
+
+function displayResult(){
+  document.getElementById("quiz").style.display="none";
+  const resDiv = document.getElementById("result");
+  const res = results.find(r=>score>=r.min&&score<=r.max);
+  resDiv.style.display="block";
+  resDiv.innerHTML=`<h2>النقاط: ${score}</h2><p>${res.message}</p>`;
+  for(let i=0;i<100;i++){
+    const c = document.createElement('div');
+    c.style.left=Math.random()*100+'%';
+    c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+    c.style.width=Math.random()*8+5+'px';
+    c.style.height=c.style.width;
+    c.style.animationDelay=Math.random()*3+'s';
+    document.getElementById("confetti").appendChild(c);
+  }
+  localStorage.removeItem('quizProgress');
+}
+
+loadProgress();
+showQuestion();
+</script>
+</body>
+</html>
